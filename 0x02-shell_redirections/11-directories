@@ -1,2 +1,2 @@
 #!/bin/bash
-count = 0
+find . -type d -path './*' -print | wc -l
