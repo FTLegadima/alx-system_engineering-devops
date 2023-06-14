@@ -1,2 +1,2 @@
 #!/bin/bash
-PATH*$PATH:/ation
+PATH="$PATH:/ation"
