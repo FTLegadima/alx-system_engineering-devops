@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Function to query DNS records
+query_dns() {
+    dig "$1.$2" | awk '/^;; ANSWER SECTION:$/,/^$/' | awk '/^[^;].*/ {print $4}'
+}
+
+# Function to display information for a subdomain
+display_info() {
+    local subdomain="$1"
+    local domain="$2"
+    local ip=$(query_dns "$subdomain" "$domain")
+    local record_type="A"
+    echo "The subdomain $subdomain is a $record_type record and points to $ip"
+}
+
+# Main script
+if [ $# -eq 1 ]; then
+    # If only domain parameter is provided, display information for all subdomains
+    domain="$1"
+    display_info "www" "$domain"
+    display_info "lb-01" "$domain"
+    display_info "web-01" "$domain"
+    display_info "web-02" "$domain"
+elif [ $# -eq 2 ]; then
+    # If both domain and subdomain parameters are provided, display information for the specified subdomain
+    domain="$1"
+    subdomain="$2"
+    display_info "$subdomain" "$domain"
+else
+    echo "Usage: $0 <domain> [subdomain]"
+    exit 1
+fi
+
