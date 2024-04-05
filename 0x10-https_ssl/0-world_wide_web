@@ -1,34 +1,33 @@
 #!/bin/bash
 
-# Function to query DNS records
-query_dns() {
-    dig "$1.$2" | awk '/^;; ANSWER SECTION:$/,/^$/' | awk '/^[^;].*/ {print $4}'
-}
-
-# Function to display information for a subdomain
+# Function to display information about a subdomain
 display_info() {
-    local subdomain="$1"
-    local domain="$2"
-    local ip=$(query_dns "$subdomain" "$domain")
-    local record_type="A"
-    echo "The subdomain $subdomain is a $record_type record and points to $ip"
+    local domain=$1
+    local subdomain=$2
+    
+    # If subdomain is not provided, use default list
+    if [ -z "$subdomain" ]; then
+        subdomains=("www" "lb-01" "web-01" "web-02")
+    else
+        subdomains=("$subdomain")
+    fi
+    
+    for sub in "${subdomains[@]}"; do
+        result=$(dig +short $sub.$domain)
+        if [ -z "$result" ]; then
+            echo "No record found for $sub.$domain"
+        else
+            record_type=$(dig +short $sub.$domain | awk 'NR==1{print $4}')
+            echo "The subdomain $sub is a $record_type record and points to $result"
+        fi
+    done
 }
 
-# Main script
-if [ $# -eq 1 ]; then
-    # If only domain parameter is provided, display information for all subdomains
-    domain="$1"
-    display_info "www" "$domain"
-    display_info "lb-01" "$domain"
-    display_info "web-01" "$domain"
-    display_info "web-02" "$domain"
-elif [ $# -eq 2 ]; then
-    # If both domain and subdomain parameters are provided, display information for the specified subdomain
-    domain="$1"
-    subdomain="$2"
-    display_info "$subdomain" "$domain"
-else
+# Check if required arguments are provided
+if [ "$#" -lt 1 ]; then
     echo "Usage: $0 <domain> [subdomain]"
     exit 1
 fi
 
+# Call the function with provided arguments
+display_info "$@"
